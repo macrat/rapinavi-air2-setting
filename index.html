@@ -74,7 +74,7 @@ footer {
 <body>
 <div>
 	<h2>設定したい値</h2>
-	<p><label id=url>URL: <input type=url size=28 required><span class=message>入力してください。</span></label></p>
+	<p><label id=url>URL: <input type=url size=29 maxlength=28 required><span class=message>入力してください。</span></label></p>
 	<p><label id=power>電波強度: <select>
 		<option value=0>+4dBm</option>
 		<option value=1>0dBm</option>
@@ -91,28 +91,28 @@ footer {
 
 <div>
 	<h2>設定アプリ上での値</h2>
-	<p><label id=uuid>UUID: <input size=32 maxlength=32><span class=message>入力してください。</span></label></p>
-	<p><label id=major>major: <input size=4 maxlength=4 value=1000 required><span class=message></label></span></p>
-	<p><label id=power_out>Tx Power: <input size=2 maxlength=2 min=0 max=8 value=00 required><span class=message></span></label></p>
-	<p><label id=freq_out>Advertising Interval: <input size=4 maxlength=4 value=01F4><span class=message></label></p>
+	<p><label id=uuid>UUID: <input size=33 maxlength=32><span class=message>入力してください。</span></label></p>
+	<p><label id=major>major: <input size=5 maxlength=4 value=1000 required><span class=message></label></span></p>
+	<p><label id=power_out>Tx Power: <input size=3 maxlength=2 min=0 max=8 value=00 required><span class=message></span></label></p>
+	<p><label id=freq_out>Advertising Interval: <input size=5 maxlength=4 value=01F4><span class=message></label></p>
 </div>
 
 <footer>MIT License (c)2016 MacRat</footer>
 
 <script>
-const url = document.querySelector('#url input');
+const url_input = document.querySelector('#url input');
 const url_msg = document.querySelector('#url .message');
-const power = document.querySelector('#power select');
-const frequency = document.querySelector('#frequency input');
+const power_input = document.querySelector('#power select');
+const frequency_input = document.querySelector('#frequency input');
 const frequency_value = document.querySelector('#frequency span');
 
-const uuid = document.querySelector('#uuid input');
+const uuid_input = document.querySelector('#uuid input');
 const uuid_msg = document.querySelector('#uuid .message');
-const major = document.querySelector('#major input');
+const major_input = document.querySelector('#major input');
 const major_msg = document.querySelector('#major .message');
-const power_out = document.querySelector('#power_out input');
+const power_out_input = document.querySelector('#power_out input');
 const power_out_msg = document.querySelector('#power_out .message');
-const frequency_out = document.querySelector('#freq_out input');
+const frequency_out_input = document.querySelector('#freq_out input');
 const frequency_out_msg = document.querySelector('#freq_out .message');
 
 const scheme = [
@@ -140,10 +140,10 @@ function id_to_scheme(id) {
 	return scheme[parseInt(id)];
 }
 
-function split_url(url) {
+function split_url(u) {
 	for(let i=0; i<scheme.length; i++){
-		if(url.indexOf(scheme[i]) == 0){
-			const suburl = url.substr(scheme[i].length, url.length);
+		if(u.indexOf(scheme[i]) == 0){
+			const suburl = u.substr(scheme[i].length, u.length);
 			if(suburl.length == 0){
 				throw new Error('短かぎます。');
 			}
@@ -156,20 +156,20 @@ function split_url(url) {
 	throw new Error('http://かhttps://で始まるものでなければなりません。');
 }
 
-function power_to_major(power) {
-	if(power < 0 || 8 < power){
+function power_to_major(p) {
+	if(p < 0 || 8 < p){
 		throw new Error('不正なTxPowerです。');
 	}
-	return major_list[parseInt(power)];
+	return major_list[parseInt(p)];
 }
 
-function major_to_power(major) {
-	let power = major_list.indexOf(major);
+function major_to_power(m) {
+	let p = major_list.indexOf(m);
 
-	if(power < 0){
+	if(p < 0){
 		throw new Error('不正なmajorです。');
 	}
-	return power;
+	return p;
 }
 
 function string_to_hex(str) {
@@ -191,144 +191,153 @@ function hex_to_string(str) {
 	return result;
 }
 
-function make_url_hex(scheme_id, url) {
-	const result = '0' + scheme_id + string_to_hex(url);
+function make_url_hex(scheme_id, url_) {
+	const result = '0' + scheme_id + string_to_hex(url_);
 	return result + '0'.repeat(32 - result.length)
 }
 
-function url_to_uuid(url) {
-	if(url.length == 0){
+function url_to_uuid(u) {
+	if(u.length == 0){
 		throw new Error('入力してください。');
 	}else{
-		let x = split_url(url);
+		let x = split_url(u);
 		return make_url_hex(x[0], x[1]);
 	}
 }
 
 function url_validation() {
-	url.setCustomValidity('');
+	url_input.setCustomValidity('');
 	try{
-		url_to_uuid(url.value);
+		url_to_uuid(url_input.value);
 	}catch(e){
-		url.setCustomValidity(e.message);
+		url_input.setCustomValidity(e.message);
 	}
-	url_msg.innerText = url.validationMessage;
+	url_msg.innerText = url_input.validationMessage;
 }
 
-url.addEventListener('keyup', e => {
-	url.setCustomValidity('');
-	uuid.value = '';
+url_input.addEventListener('keyup', e => {
+	url_input.setCustomValidity('');
+	uuid_input.value = '';
 	try{
-		uuid.value = url_to_uuid(url.value);
+		uuid_input.value = url_to_uuid(url_input.value);
 	}catch(e){
-		url.setCustomValidity(e.message);
+		url_input.setCustomValidity(e.message);
 	}
-	url_msg.innerText = url.validationMessage;
+	url_msg.innerText = url_input.validationMessage;
 	uuid_validation();
 });
 
-power.addEventListener('change', e => {
-	power_out.value = '0' + power.value;
-	major.value = power_to_major(power.value);
+power_input.addEventListener('change', e => {
+	if(power_input.value.length != 2){
+		power_out_input.value = '0' + power_input.value;
+	}
+	major_input.value = power_to_major(power_input.value);
 });
 
-frequency.addEventListener('input', e => {
-	frequency_value.innerText = frequency.value + 'ms';
-	frequency_out.value = ('0'.repeat(4) + parseInt(frequency.value).toString(16).toUpperCase()).slice(-4);
+frequency_input.addEventListener('input', e => {
+	frequency_value.innerText = frequency_input.value + 'ms';
+	frequency_out_input.value = ('0'.repeat(4) + parseInt(frequency_input.value).toString(16).toUpperCase()).slice(-4);
 });
 
 function uuid_validation() {
-	uuid.setCustomValidity('');
-	if(uuid.value.length != 32){
-		uuid.setCustomValidity('UUIDは32文字でなればなりません。');
+	uuid_input.setCustomValidity('');
+	if(uuid_input.value.length != 32){
+		uuid_input.setCustomValidity('UUIDは32文字でなればなりません。');
 	}else{
 		try{
-			id_to_scheme(parseInt(uuid.value.slice(0, 2), 16));
+			id_to_scheme(parseInt(uuid_input.value.slice(0, 2), 16));
 		}catch(e){
-			uuid.setCustomValidity('Eddystone-URLのUUIDではありません。');
+			uuid_input.setCustomValidity('Eddystone-URLのUUIDではありません。');
 		}
 	}
-	uuid_msg.innerText = uuid.validationMessage;
+	uuid_msg.innerText = uuid_input.validationMessage;
 }
 
-uuid.setCustomValidity('入力してください。');
-uuid.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
-uuid.addEventListener('keyup', e => {
-	uuid.setCustomValidity('');
-	url.value = '';
-	uuid.value = uuid.value.toUpperCase();
-	if(uuid.value.length == 0){
-		uuid.setCustomValidity('入力してください。');
-	}else if(uuid.value.length != 32){
-		uuid.setCustomValidity('32文字でなればなりません。');
+uuid_input.setCustomValidity('入力してください。');
+uuid_input.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
+uuid_input.addEventListener('keyup', e => {
+	uuid_input.setCustomValidity('');
+	url_input.value = '';
+	let upper = uuid_input.value.toUpperCase();
+	if(uuid_input.value != upper){
+		uuid_input.value = upper;
+	}
+	if(uuid_input.value.length == 0){
+		uuid_input.setCustomValidity('入力してください。');
+	}else if(uuid_input.value.length != 32){
+		uuid_input.setCustomValidity('32文字でなればなりません。');
 	}else{
-		let scheme;
 		try{
-			scheme = id_to_scheme(parseInt(uuid.value.slice(0, 2), 16));
-			url.value = scheme + hex_to_string(uuid.value.slice(2));
+			let scheme = id_to_scheme(parseInt(uuid_input.value.slice(0, 2), 16));
+			url_input.value = scheme + hex_to_string(uuid_input.value.slice(2));
 		}catch(e){
-			uuid.setCustomValidity('Eddystone-URLのUUIDではありません。');
+			uuid_input.setCustomValidity('Eddystone-URLのUUIDではありません。');
 		}
 	}
 	url_validation();
-	uuid_msg.innerText = uuid.validationMessage;
+	uuid_msg.innerText = uuid_input.validationMessage;
 });
 
 function major_changed() {
-	if(major.value.length == 0){
-		major.setCustomValidity('入力してください。');
+	if(major_input.value.length == 0){
+		major_input.setCustomValidity('入力してください。');
 	}else{
-		major.value = major.value.toUpperCase();
+		let upper = major_input.value.toUpperCase();
+		if(major_input.value != upper){
+			major_input.value = upper;
+		}
 		try{
-			power.value = major_to_power(major.value);
-			power_out.value = '0' + power.value;
-			major.setCustomValidity('');
+			power_input.value = major_to_power(major_input.value);
+			power_out_input.value = '0' + power_input.value;
+			major_input.setCustomValidity('');
 		}catch(e){
-			major.setCustomValidity('不正な値です。');
+			major_input.setCustomValidity('不正な値です。');
 		}
 	}
-	major_msg.innerText = major.validationMessage;
+	major_msg.innerText = major_input.validationMessage;
 }
-major.addEventListener('change', e => major_changed());
-major.addEventListener('keyup', e => major_changed());
+major_input.addEventListener('change', e => major_changed());
+major_input.addEventListener('keyup', e => major_changed());
 
 function power_out_changed() {
-	if(power_out.value.length == 0){
-		power_out.setCustomValidity('入力してください。');
-	}else if(parseInt(power_out.value) < 0 || 8 < parseInt(power_out.value)){
-		power_out.setCustomValidity('0から8の間でなればなりません。');
+	if(power_out_input.value.length == 0){
+		power_out_input.setCustomValidity('入力してください。');
+	}else if(parseInt(power_out_input.value) < 0 || 8 < parseInt(power_out_input.value)){
+		power_out_input.setCustomValidity('0から8の間でなればなりません。');
 	}else{
-		power.value = parseInt(power_out.value);
-		major.value = power_to_major(power.value);
-		power_out.value = '0' + power.value;
-		power_out.setCustomValidity('');
+		power_input.value = parseInt(power_out_input.value);
+		major_input.value = power_to_major(power_input.value);
+		power_out_input.setCustomValidity('');
 	}
-	power_out_msg.innerText = power_out.validationMessage;
+	power_out_msg.innerText = power_out_input.validationMessage;
 }
-frequency_out.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
-power_out.addEventListener('change', e => power_out_changed());
-power_out.addEventListener('keyup', e => power_out_changed());
+frequency_out_input.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
+power_out_input.addEventListener('change', e => power_out_changed());
+power_out_input.addEventListener('keyup', e => power_out_changed());
 
-frequency_out.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
-frequency_out.addEventListener('keyup', e => {
-	frequency_out.setCustomValidity('');
-	frequency_out.value = frequency_out.value.toUpperCase();
-	if(frequency_out.value.length == 0){
-		frequency_out.setCustomValidity('入力してください。');
-	}else if(frequency_out.value.length != 4){
-		frequency_out.setCustomValidity('4文字でなればなりません。');
+frequency_out_input.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
+frequency_out_input.addEventListener('keyup', e => {
+	frequency_out_input.setCustomValidity('');
+	let upper = frequency_out_input.value.toUpperCase();
+	if(frequency_out_input.value != upper){
+		frequency_out_input.value = upper;
+	}
+	if(frequency_out_input.value.length == 0){
+		frequency_out_input.setCustomValidity('入力してください。');
+	}else if(frequency_out_input.value.length != 4){
+		frequency_out_input.setCustomValidity('4文字でなればなりません。');
 	}else{
-		let val = parseInt(frequency_out.value, 16);
+		let val = parseInt(frequency_out_input.value, 16);
 		if(val < 100 || 1000 < val){
-			frequency_out.setCustomValidity('0064から03E8の間でなればなりません。');
+			frequency_out_input.setCustomValidity('0064から03E8の間でなればなりません。');
 		}else if(val%100 != 0){
-			frequency_out.setCustomValidity('10進数で100の倍数でなればなりません。');
+			frequency_out_input.setCustomValidity('10進数で100の倍数でなればなりません。');
 		}else{
-			frequency.value = parseInt(frequency_out.value, 16)
-			frequency_value.innerText = frequency.value + 'ms';
+			frequency_input.value = parseInt(frequency_out_input.value, 16)
+			frequency_value.innerText = frequency_input.value + 'ms';
 		}
 	}
-	frequency_out_msg.innerText = frequency_out.validationMessage;
+	frequency_out_msg.innerText = frequency_out_input.validationMessage;
 });
 </script>
 </body>
