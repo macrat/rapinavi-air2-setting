@@ -202,7 +202,9 @@ const uuid_handler = {
 	},
 	verify: function() {
 		this.elm.setCustomValidity('');
-		if(this.uuid.length != 32){
+		if(this.uuid.length == 0){
+			this.elm.setCustomValidity('入力してください。');
+		}else if(this.uuid.length != 32){
 			this.elm.setCustomValidity('UUIDは32文字でなればなりません。');
 		}else{
 			try{
