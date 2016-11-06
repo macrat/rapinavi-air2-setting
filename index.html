@@ -3,6 +3,8 @@
 <html>
 <head>
 <title>rapiNAVI Air2 設定支援アプリ</title>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta charset=utf-8>
 <style>
 body {
 	display: flex;
@@ -46,6 +48,26 @@ footer {
 	color: gray;
 	font-size: 80%;
 }
+
+@media screen and (max-width: 50em) {
+	body {
+		display: block;
+		margin: 0;
+	}
+	div {
+		min-width: auto;
+		margin: 0;
+		border: 0;
+	}
+	footer {
+		position: relative;
+		top: 0;
+		left: 0;
+		padding: .5em;
+		padding: .5em;
+		text-align: right;
+	}
+}
 </style>
 </head>
 
@@ -71,7 +93,7 @@ footer {
 	<h2>設定アプリ上での値</h2>
 	<p><label id=uuid>UUID: <input size=32 maxlength=32><span class=message>入力してください。</span></label></p>
 	<p><label id=major>major: <input size=4 maxlength=4 value=1000 required><span class=message></label></span></p>
-	<p><label id=power_out>Tx Power: <input type=number min=0 max=8 value=00 required><span class=message></span></label></p>
+	<p><label id=power_out>Tx Power: <input size=2 maxlength=2 min=0 max=8 value=00 required><span class=message></span></label></p>
 	<p><label id=freq_out>Advertising Interval: <input size=4 maxlength=4 value=01F4><span class=message></label></p>
 </div>
 
@@ -151,7 +173,7 @@ function major_to_power(major) {
 }
 
 function string_to_hex(str) {
-	return str.split('').map(x => x.charCodeAt(0).toString(16)).join('');
+	return str.split('').map(x => x.charCodeAt(0).toString(16).toUpperCase()).join('');
 }
 
 function hex_to_string(str) {
@@ -212,7 +234,7 @@ power.addEventListener('change', e => {
 
 frequency.addEventListener('input', e => {
 	frequency_value.innerText = frequency.value + 'ms';
-	frequency_out.value = ('0'.repeat(4) + parseInt(frequency.value).toString(16)).slice(-4);
+	frequency_out.value = ('0'.repeat(4) + parseInt(frequency.value).toString(16).toUpperCase()).slice(-4);
 });
 
 function uuid_validation() {
@@ -283,6 +305,7 @@ function power_out_changed() {
 	}
 	power_out_msg.innerText = power_out.validationMessage;
 }
+frequency_out.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
 power_out.addEventListener('change', e => power_out_changed());
 power_out.addEventListener('keyup', e => power_out_changed());
 
