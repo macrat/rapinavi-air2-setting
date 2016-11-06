@@ -100,22 +100,7 @@ footer {
 <footer>MIT License (c)2016 MacRat</footer>
 
 <script>
-const url_input = document.querySelector('#url input');
-const url_msg = document.querySelector('#url .message');
-const power_input = document.querySelector('#power select');
-const frequency_input = document.querySelector('#frequency input');
-const frequency_value = document.querySelector('#frequency span');
-
-const uuid_input = document.querySelector('#uuid input');
-const uuid_msg = document.querySelector('#uuid .message');
-const major_input = document.querySelector('#major input');
-const major_msg = document.querySelector('#major .message');
-const power_out_input = document.querySelector('#power_out input');
-const power_out_msg = document.querySelector('#power_out .message');
-const frequency_out_input = document.querySelector('#freq_out input');
-const frequency_out_msg = document.querySelector('#freq_out .message');
-
-const scheme = [
+const scheme_list = [
 	'http://www.',
 	'https://www.',
 	'http://',
@@ -133,212 +118,366 @@ const major_list = [
 	'10D8',
 ];
 
-function id_to_scheme(id) {
-	if(id < 0 || scheme.length <= id){
-		throw new Error('不正なschemeです。');
-	}
-	return scheme[parseInt(id)];
-}
-
-function split_url(u) {
-	for(let i=0; i<scheme.length; i++){
-		if(u.indexOf(scheme[i]) == 0){
-			const suburl = u.substr(scheme[i].length, u.length);
-			if(suburl.length == 0){
-				throw new Error('短かぎます。');
+const url_handler = {
+	elm: document.querySelector('#url input'),
+	msg: document.querySelector('#url .message'),
+	url_to_hex: function(hex) {
+		for(let i=0; i<scheme_list.length; i++){
+			if(this.url.indexOf(scheme_list[i]) == 0){
+				const suburl = this.url.substr(scheme_list[i].length, this.url.length);
+				if(suburl.length == 0){
+					throw new Error('短かぎます。');
+				}
+				if(suburl.length > 15){
+					throw new Error('長すぎます。');
+				}
+				const result = '0' + i + suburl.split('').map(x => x.charCodeAt(0).toString(16).toUpperCase()).join('');
+				return result + '0'.repeat(32 - result.length)
 			}
-			if(suburl.length > 15){
-				throw new Error('長すぎます。');
-			}
-			return [i, suburl];
 		}
-	}
-	throw new Error('http://かhttps://で始まるものでなければなりません。');
-}
-
-function power_to_major(p) {
-	if(p < 0 || 8 < p){
-		throw new Error('不正なTxPowerです。');
-	}
-	return major_list[parseInt(p)];
-}
-
-function major_to_power(m) {
-	let p = major_list.indexOf(m);
-
-	if(p < 0){
-		throw new Error('不正なmajorです。');
-	}
-	return p;
-}
-
-function string_to_hex(str) {
-	return str.split('').map(x => x.charCodeAt(0).toString(16).toUpperCase()).join('');
-}
-
-function hex_to_string(str) {
-	let result = '';
-	for(let i=0; i<str.length; i+=2){
-		let x = parseInt(str.slice(i, i+2), 16);
-		if(x == 0){
-			if(parseInt(str.slice(i), 16) != 0){
-				throw new Error('不正な文字列です。');
-			}
-			break;
-		}
-		result += String.fromCharCode(x);
-	}
-	return result;
-}
-
-function make_url_hex(scheme_id, url_) {
-	const result = '0' + scheme_id + string_to_hex(url_);
-	return result + '0'.repeat(32 - result.length)
-}
-
-function url_to_uuid(u) {
-	if(u.length == 0){
-		throw new Error('入力してください。');
-	}else{
-		let x = split_url(u);
-		return make_url_hex(x[0], x[1]);
-	}
-}
-
-function url_validation() {
-	url_input.setCustomValidity('');
-	try{
-		url_to_uuid(url_input.value);
-	}catch(e){
-		url_input.setCustomValidity(e.message);
-	}
-	url_msg.innerText = url_input.validationMessage;
-}
-
-url_input.addEventListener('keyup', e => {
-	url_input.setCustomValidity('');
-	uuid_input.value = '';
-	try{
-		uuid_input.value = url_to_uuid(url_input.value);
-	}catch(e){
-		url_input.setCustomValidity(e.message);
-	}
-	url_msg.innerText = url_input.validationMessage;
-	uuid_validation();
-});
-
-power_input.addEventListener('change', e => {
-	if(power_input.value.length != 2){
-		power_out_input.value = '0' + power_input.value;
-	}
-	major_input.value = power_to_major(power_input.value);
-});
-
-frequency_input.addEventListener('input', e => {
-	frequency_value.innerText = frequency_input.value + 'ms';
-	frequency_out_input.value = ('0'.repeat(4) + parseInt(frequency_input.value).toString(16).toUpperCase()).slice(-4);
-});
-
-function uuid_validation() {
-	uuid_input.setCustomValidity('');
-	if(uuid_input.value.length != 32){
-		uuid_input.setCustomValidity('UUIDは32文字でなればなりません。');
-	}else{
-		try{
-			id_to_scheme(parseInt(uuid_input.value.slice(0, 2), 16));
-		}catch(e){
-			uuid_input.setCustomValidity('Eddystone-URLのUUIDではありません。');
-		}
-	}
-	uuid_msg.innerText = uuid_input.validationMessage;
-}
-
-uuid_input.setCustomValidity('入力してください。');
-uuid_input.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
-uuid_input.addEventListener('keyup', e => {
-	uuid_input.setCustomValidity('');
-	url_input.value = '';
-	let upper = uuid_input.value.toUpperCase();
-	if(uuid_input.value != upper){
-		uuid_input.value = upper;
-	}
-	if(uuid_input.value.length == 0){
-		uuid_input.setCustomValidity('入力してください。');
-	}else if(uuid_input.value.length != 32){
-		uuid_input.setCustomValidity('32文字でなればなりません。');
-	}else{
-		try{
-			let scheme = id_to_scheme(parseInt(uuid_input.value.slice(0, 2), 16));
-			url_input.value = scheme + hex_to_string(uuid_input.value.slice(2));
-		}catch(e){
-			uuid_input.setCustomValidity('Eddystone-URLのUUIDではありません。');
-		}
-	}
-	url_validation();
-	uuid_msg.innerText = uuid_input.validationMessage;
-});
-
-function major_changed() {
-	if(major_input.value.length == 0){
-		major_input.setCustomValidity('入力してください。');
-	}else{
-		let upper = major_input.value.toUpperCase();
-		if(major_input.value != upper){
-			major_input.value = upper;
-		}
-		try{
-			power_input.value = major_to_power(major_input.value);
-			power_out_input.value = '0' + power_input.value;
-			major_input.setCustomValidity('');
-		}catch(e){
-			major_input.setCustomValidity('不正な値です。');
-		}
-	}
-	major_msg.innerText = major_input.validationMessage;
-}
-major_input.addEventListener('change', e => major_changed());
-major_input.addEventListener('keyup', e => major_changed());
-
-function power_out_changed() {
-	if(power_out_input.value.length == 0){
-		power_out_input.setCustomValidity('入力してください。');
-	}else if(parseInt(power_out_input.value) < 0 || 8 < parseInt(power_out_input.value)){
-		power_out_input.setCustomValidity('0から8の間でなればなりません。');
-	}else{
-		power_input.value = parseInt(power_out_input.value);
-		major_input.value = power_to_major(power_input.value);
-		power_out_input.setCustomValidity('');
-	}
-	power_out_msg.innerText = power_out_input.validationMessage;
-}
-frequency_out_input.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
-power_out_input.addEventListener('change', e => power_out_changed());
-power_out_input.addEventListener('keyup', e => power_out_changed());
-
-frequency_out_input.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
-frequency_out_input.addEventListener('keyup', e => {
-	frequency_out_input.setCustomValidity('');
-	let upper = frequency_out_input.value.toUpperCase();
-	if(frequency_out_input.value != upper){
-		frequency_out_input.value = upper;
-	}
-	if(frequency_out_input.value.length == 0){
-		frequency_out_input.setCustomValidity('入力してください。');
-	}else if(frequency_out_input.value.length != 4){
-		frequency_out_input.setCustomValidity('4文字でなればなりません。');
-	}else{
-		let val = parseInt(frequency_out_input.value, 16);
-		if(val < 100 || 1000 < val){
-			frequency_out_input.setCustomValidity('0064から03E8の間でなればなりません。');
-		}else if(val%100 != 0){
-			frequency_out_input.setCustomValidity('10進数で100の倍数でなればなりません。');
+		throw new Error('http://かhttps://で始まるものでなければなりません。');
+	},
+	get uuid() {
+		if(this.url.length == 0){
+			throw new Error('入力してください。');
 		}else{
-			frequency_input.value = parseInt(frequency_out_input.value, 16)
-			frequency_value.innerText = frequency_input.value + 'ms';
+			return this.url_to_hex(this.url);
 		}
+	},
+	verify: function() {
+		try{
+			let _ = this.uuid;
+			this.elm.setCustomValidity('');
+			this.msg.innerText = '';
+			return true;
+		}catch(e){
+			this.elm.setCustomValidity(e.message);
+			this.msg.innerText = this.elm.validationMessage;
+			return false;
+		}
+	},
+	get url() {
+		return this.elm.value;
+	},
+	set url(u) {
+		this.elm.value = u;
+		this.verify();
+	},
+	advertise: function() {
+		try{
+			uuid_handler.uuid = this.uuid;
+		}catch(e){
+			uuid_handler.uuid = '';
+		}
+	},
+	on_updated: function() {
+		this.verify();
+		this.advertise();
+	},
+	init: function() {
+		this.elm.addEventListener('keyup', e => this.on_updated());
+	},
+};
+url_handler.init();
+
+const uuid_handler = {
+	elm: document.querySelector('#uuid input'),
+	msg: document.querySelector('#uuid .message'),
+	get url() {
+		let result = scheme_list[parseInt(this.uuid.slice(0, 2), 16)];
+
+		const str = this.uuid.slice(2);
+		for(let i=0; i<str.length; i+=2){
+			const x = parseInt(str.slice(i, i+2), 16);
+			if(x == 0){
+				if(parseInt(str.slice(i), 16) != 0){
+					throw new Error('不正な文字列です。');
+				}
+				break;
+			}
+			result += String.fromCharCode(x);
+		}
+
+		return result;
+	},
+	verify: function() {
+		this.elm.setCustomValidity('');
+		if(this.uuid.length != 32){
+			this.elm.setCustomValidity('UUIDは32文字でなればなりません。');
+		}else{
+			try{
+				let _ = this.url;
+			}catch(e){
+				this.elm.setCustomValidity('Eddystone-URLのUUIDではありません。');
+			}
+		}
+		this.msg.innerText = this.elm.validationMessage;
+	},
+	get uuid() {
+		return this.elm.value;
+	},
+	set uuid(u) {
+		const upper = u.toUpperCase();
+		if(this.elm.value != upper){
+			this.elm.value = upper;
+		}
+		this.verify();
+	},
+	advertise: function() {
+		try{
+			url_handler.url = this.url;
+		}catch(e){
+			url_handler.url = '';
+		}
+	},
+	on_updated: function() {
+		this.uuid = this.uuid;
+		this.verify();
+		if(this.msg.innerText.length == 0){
+			this.advertise();
+		}
+	},
+	init: function() {
+		this.elm.setCustomValidity('入力してください。');
+		this.elm.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
+		this.elm.addEventListener('keyup', e => this.on_updated());
+	},
+};
+uuid_handler.init();
+
+const power_input_handler = {
+	elm: document.querySelector('#power select'),
+	get power() {
+		if(this.elm.value < 0 || 8 < this.elm.value){
+			throw new Error('不正なTxPowerです。');
+		}
+		return parseInt(this.elm.value);
+	},
+	set power(p) {
+		this.elm.value = p;
+	},
+	get power_out() {
+		return '0' + this.power;
+	},
+	get major() {
+		return major_list[this.power];
+	},
+	advertise: function() {
+		try{
+			power_out_handler.power = this.power_out;
+			major_handler.major = this.major;
+		}catch(e){
+			power_out_handler.power = '';
+			major_handler.major = '';
+		}
+	},
+	on_updated: function() {
+		this.advertise();
+	},
+	init: function() {
+		this.elm.addEventListener('change', e => this.on_updated());
+	},
+};
+power_input_handler.init();
+
+const major_handler = {
+	elm: document.querySelector('#major input'),
+	msg: document.querySelector('#major .message'),
+	get major() {
+		return this.elm.value;
+	},
+	set major(m) {
+		if(!m){
+			this.elm.value = '';
+			return;
+		}
+		const upper = m.toUpperCase();
+		if(this.elm.value != upper){
+			this.elm.value = upper;
+		}
+		this.verify();
+	},
+	get power() {
+		let p = major_list.indexOf(this.major);
+
+		if(p < 0){
+			throw new Error('不正なmajorです。');
+		}
+
+		return p;
+	},
+	get power_out() {
+		return '0' + this.power;
+	},
+	verify: function() {
+		this.elm.setCustomValidity('');
+		if(this.major.length == 0){
+			this.elm.setCustomValidity('入力してください。');
+		}else{
+			try{
+				let _ = this.power;
+				this.elm.setCustomValidity('');
+			}catch(e){
+				this.elm.setCustomValidity('不正な値です。');
+			}
+		}
+		this.msg.innerText = this.elm.validationMessage;
+	},
+	advertise: function() {
+		try{
+			power_input_handler.power = this.power;
+			power_out_handler.power = this.power_out;
+		}catch(e){
+			power_input_handler.power = '';
+			power_out_handler.power = '';
+		}
+	},
+	on_updated: function() {
+		this.major = this.major;
+		this.verify();
+		this.advertise();
+	},
+	init: function() {
+		this.elm.addEventListener('change', e => this.on_updated());
+		this.elm.addEventListener('keyup', e => this.on_updated());
+	},
+};
+major_handler.init();
+
+const power_out_handler = {
+	elm: document.querySelector('#power_out input'),
+	msg: document.querySelector('#power_out .message'),
+	get power() {
+		return this.elm.value;
+	},
+	set power(p) {
+		if(isNaN(p) || p == ''){
+			this.elm.value = '';
+		}else{
+			this.elm.value = '0' + parseInt(p);
+		}
+		this.verify();
+	},
+	get power_input() {
+		return parseInt(this.power);
+	},
+	get major() {
+		return major_list[this.power_input];
+	},
+	verify: function() {
+		this.elm.setCustomValidity('');
+		if(this.power.length == 0){
+			this.elm.setCustomValidity('入力してください。');
+		}else if(this.power_input < 0 || 8 < this.power_input){
+			this.elm.setCustomValidity('0から8の間でなければなりません。');
+		}
+		this.msg.innerText = this.elm.validationMessage;
+	},
+	advertise: function() {
+		try{
+			power_input_handler.power = this.power_input;
+			major_handler.major = this.major;
+		}catch(e){
+			power_input_handler.power = '';
+			major_handler.major = '';
+			throw e;
+		}
+	},
+	on_updated: function() {
+		this.verify();
+		this.advertise();
+	},
+	init: function() {
+		this.elm.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
+		this.elm.addEventListener('change', e => this.on_updated());
+		this.elm.addEventListener('keyup', e => this.on_updated());
+	},
+};
+power_out_handler.init();
+
+const frequency_input_handler = {
+	elm: document.querySelector('#frequency input'),
+	indicator: document.querySelector('#frequency span'),
+	get frequency() {
+		return parseInt(this.elm.value);
+	},
+	set frequency(f) {
+		if(f < 100 || 1000 < f){
+			throw new Error('100から1000の間でなければなりません。');
+		}else if(f%100 != 0){
+			throw new Error('100の倍数でなければなりません。');
+		}
+		this.indicator.innerText = f + 'ms';
+		this.elm.value = f;
+	},
+	advertise: function() {
+		try{
+			frequency_out_handler.frequency = this.frequency;
+		}catch(e){
+			frequency_out_handler.frequency = '';
+		}
+	},
+	on_updated: function() {
+		this.frequency = this.frequency;
+		this.advertise();
+	},
+	init: function() {
+		this.elm.addEventListener('input', e => this.on_updated());
 	}
-	frequency_out_msg.innerText = frequency_out_input.validationMessage;
-});
+};
+frequency_input_handler.init();
+
+const frequency_out_handler = {
+	elm: document.querySelector('#freq_out input'),
+	msg: document.querySelector('#freq_out .message'),
+	get frequency_out() {
+		return this.elm.value;
+	},
+	set frequency_out(f) {
+		const upper = f.toUpperCase();
+		if(this.frequency_out != upper){
+			this.elm.value = upper;
+		}
+		this.verify();
+	},
+	get frequency() {
+		return parseInt(this.frequency_out, 16);
+	},
+	set frequency(f) {
+		this.elm.value = ('0000' + f.toString(16).toUpperCase()).slice(-4);
+		this.verify();
+	},
+	verify: function() {
+		if(this.frequency_out.length == 0){
+			this.elm.setCustomValidity('入力してください。');
+		}else if(this.frequency_out.length != 4){
+			this.elm.setCustomValidity('4文字でなければなりません。');
+		}else if(this.frequency < 100 || 1000 < this.frequency){
+			this.elm.setCustomValidity('0064から03E8の間でなければなりません。');
+		}else if(this.frequency%100 != 0){
+			this.elm.setCustomValidity('10進数で100の倍数でなければなりません。');
+		}else{
+			this.elm.setCustomValidity('');
+		}
+		this.msg.innerText = this.elm.validationMessage;
+	},
+	advertise: function() {
+		try{
+			frequency_input_handler.frequency = this.frequency;
+		}catch(e){
+		}
+	},
+	on_updated: function() {
+		this.frequency_out = this.frequency_out;
+		this.verify();
+		this.advertise();
+	},
+	init: function() {
+		this.elm.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
+		this.elm.addEventListener('keyup', e => this.on_updated());
+	},
+};
+frequency_out_handler.init();
 </script>
 </body>
 </html>
