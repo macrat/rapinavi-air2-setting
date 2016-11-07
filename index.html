@@ -144,7 +144,7 @@ const url_handler = {
 			return this.url_to_hex(this.url);
 		}
 	},
-	verify: function() {
+	verify() {
 		try{
 			let _ = this.uuid;
 			this.elm.setCustomValidity('');
@@ -163,18 +163,18 @@ const url_handler = {
 		this.elm.value = u;
 		this.verify();
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			uuid_handler.uuid = this.uuid;
 		}catch(e){
 			uuid_handler.uuid = '';
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.verify();
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.addEventListener('keyup', e => this.on_updated());
 	},
 };
@@ -200,7 +200,7 @@ const uuid_handler = {
 
 		return result;
 	},
-	verify: function() {
+	verify() {
 		this.elm.setCustomValidity('');
 		if(this.uuid.length == 0){
 			this.elm.setCustomValidity('入力してください。');
@@ -225,21 +225,21 @@ const uuid_handler = {
 		}
 		this.verify();
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			url_handler.url = this.url;
 		}catch(e){
 			url_handler.url = '';
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.uuid = this.uuid;
 		this.verify();
 		if(this.msg.innerText.length == 0){
 			this.advertise();
 		}
 	},
-	init: function() {
+	init() {
 		this.elm.setCustomValidity('入力してください。');
 		this.elm.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
 		this.elm.addEventListener('keyup', e => this.on_updated());
@@ -264,7 +264,7 @@ const power_input_handler = {
 	get major() {
 		return major_list[this.power];
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			power_out_handler.power = this.power_out;
 			major_handler.major = this.major;
@@ -273,10 +273,10 @@ const power_input_handler = {
 			major_handler.major = '';
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.addEventListener('change', e => this.on_updated());
 	},
 };
@@ -311,7 +311,7 @@ const major_handler = {
 	get power_out() {
 		return '0' + this.power;
 	},
-	verify: function() {
+	verify() {
 		this.elm.setCustomValidity('');
 		if(this.major.length == 0){
 			this.elm.setCustomValidity('入力してください。');
@@ -325,7 +325,7 @@ const major_handler = {
 		}
 		this.msg.innerText = this.elm.validationMessage;
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			power_input_handler.power = this.power;
 			power_out_handler.power = this.power_out;
@@ -334,12 +334,12 @@ const major_handler = {
 			power_out_handler.power = '';
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.major = this.major;
 		this.verify();
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.addEventListener('change', e => this.on_updated());
 		this.elm.addEventListener('keyup', e => this.on_updated());
 	},
@@ -366,7 +366,7 @@ const power_out_handler = {
 	get major() {
 		return major_list[this.power_input];
 	},
-	verify: function() {
+	verify() {
 		this.elm.setCustomValidity('');
 		if(this.power.length == 0){
 			this.elm.setCustomValidity('入力してください。');
@@ -375,7 +375,7 @@ const power_out_handler = {
 		}
 		this.msg.innerText = this.elm.validationMessage;
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			power_input_handler.power = this.power_input;
 			major_handler.major = this.major;
@@ -385,11 +385,11 @@ const power_out_handler = {
 			throw e;
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.verify();
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.onkeydown = e => e.key.length > 1 || '0123456789'.indexOf(e.key) >= 0;
 		this.elm.addEventListener('change', e => this.on_updated());
 		this.elm.addEventListener('keyup', e => this.on_updated());
@@ -412,18 +412,18 @@ const frequency_input_handler = {
 		this.indicator.innerText = f + 'ms';
 		this.elm.value = f;
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			frequency_out_handler.frequency = this.frequency;
 		}catch(e){
 			frequency_out_handler.frequency = '';
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.frequency = this.frequency;
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.addEventListener('input', e => this.on_updated());
 	}
 };
@@ -449,7 +449,7 @@ const frequency_out_handler = {
 		this.elm.value = ('0000' + f.toString(16).toUpperCase()).slice(-4);
 		this.verify();
 	},
-	verify: function() {
+	verify() {
 		if(this.frequency_out.length == 0){
 			this.elm.setCustomValidity('入力してください。');
 		}else if(this.frequency_out.length != 4){
@@ -463,18 +463,18 @@ const frequency_out_handler = {
 		}
 		this.msg.innerText = this.elm.validationMessage;
 	},
-	advertise: function() {
+	advertise() {
 		try{
 			frequency_input_handler.frequency = this.frequency;
 		}catch(e){
 		}
 	},
-	on_updated: function() {
+	on_updated() {
 		this.frequency_out = this.frequency_out;
 		this.verify();
 		this.advertise();
 	},
-	init: function() {
+	init() {
 		this.elm.onkeydown = e => e.key.length > 1 || '0123456789abcdefABCDEF'.indexOf(e.key) >= 0;
 		this.elm.addEventListener('keyup', e => this.on_updated());
 	},
